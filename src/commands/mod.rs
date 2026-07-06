@@ -6,7 +6,7 @@ use crate::cli::Commands;
 /// Routes CLI commands to their respective logic modules
 pub fn run(command: Commands) -> anyhow::Result<()> {
     match command {
-        Commands::List => list::run()?,
+        Commands::List(args) => list::run(args)?,
     }
 
     Ok(())

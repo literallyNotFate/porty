@@ -1,3 +1,5 @@
+pub mod list;
+
 use clap::{Parser, Subcommand, ValueEnum};
 
 #[derive(Parser)]
@@ -15,7 +17,7 @@ pub struct Cli {
 #[derive(Subcommand)]
 pub enum Commands {
     /// List all available ports
-    List,
+    List(list::ListArgs),
 }
 
 /// Color output modes
