@@ -21,5 +21,5 @@ pub fn display_table(ports: &[PortInfo]) {
         table.add_row(port.to_row());
     }
 
-    println!("{table}");
+    println!("\n{table}\n");
 }
