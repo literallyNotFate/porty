@@ -12,13 +12,13 @@ fn parse_line(line: &str) -> Option<PortInfo> {
         return None;
     }
 
-    let process: String = fields[0].to_string();
+    let cmd: String = fields[0].to_string();
     let pid: u32 = fields[1].parse::<u32>().ok()?;
     let protocol: Protocol = fields[7].parse::<Protocol>().ok()?;
     let (host, port, state) = parse_addr(fields[8])?;
 
     Some(PortInfo {
-        process,
+        cmd,
         pid,
         protocol,
         port,
