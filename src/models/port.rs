@@ -1,20 +1,34 @@
 use comfy_table::Row;
 use std::{convert::Infallible, str::FromStr};
 
-/// Used trasport protocols
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// Used transport protocols
+#[derive(Debug, Clone, PartialEq, Eq, clap::ValueEnum)]
 pub enum Protocol {
+    #[value(name = "tcp")]
     Tcp,
+    #[value(name = "udp")]
     Udp,
+    #[value(skip)]
     Unknown(String),
 }
 
 /// State of the port
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, clap::ValueEnum)]
 pub enum PortState {
+    #[value(name = "listen")]
     Listen,
+    #[value(name = "established")]
     Established,
+    #[value(skip)]
     Other(String),
+}
+
+/// Port host type
+#[derive(Debug, PartialEq)]
+pub enum HostType {
+    Localhost,
+    Any,
+    External,
 }
 
 /// Main port info structure
@@ -51,6 +65,15 @@ impl FromStr for PortState {
 }
 
 impl PortInfo {
+    /// Specifies the host type based on markers
+    pub fn host_type(&self) -> HostType {
+        match self.host.as_str() {
+            "127.0.0.1" | "localhost" | "::1" | "[::1]" => HostType::Localhost,
+            "*" | "0.0.0.0" | "::" | "[::]" => HostType::Any,
+            _ => HostType::External,
+        }
+    }
+
     /// Helper method to build row for comfy_table
     pub fn to_row(&self) -> Row {
         use comfy_table::{Attribute, Cell, CellAlignment, Color, Row};

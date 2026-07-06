@@ -1,3 +1,3 @@
 pub mod port;
 
-pub use port::{PortInfo, PortState, Protocol};
+pub use port::{HostType, PortInfo, PortState, Protocol};
