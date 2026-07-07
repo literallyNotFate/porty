@@ -1,5 +1,4 @@
-use comfy_table::Row;
-use std::{convert::Infallible, str::FromStr};
+use comfy_table::{Attribute, Cell, CellAlignment, Color, Row};
 
 /// Used transport protocols
 #[derive(Debug, Clone, PartialEq, Eq, clap::ValueEnum)]
@@ -19,15 +18,6 @@ pub enum IPVersion {
     Ipv4,
     #[value(name = "ipv6")]
     Ipv6,
-}
-
-/// Process owner
-#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
-pub enum ProcessOwner {
-    #[value(name = "root")]
-    Root,
-    #[value(name = "current")]
-    Current,
 }
 
 /// State of the port
@@ -66,28 +56,6 @@ pub struct PortInfo {
     pub state: Option<PortState>,
 }
 
-impl FromStr for Protocol {
-    type Err = Infallible;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "UDP" => Ok(Self::Udp),
-            "TCP" => Ok(Self::Tcp),
-            _ => Ok(Self::Unknown(s.into())),
-        }
-    }
-}
-
-impl FromStr for PortState {
-    type Err = Infallible;
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        match s {
-            "LISTEN" => Ok(Self::Listen),
-            "ESTABLISHED" => Ok(Self::Established),
-            other => Ok(Self::Other(other.into())),
-        }
-    }
-}
-
 impl PortInfo {
     /// Specifies the host type based on markers
     pub fn host_type(&self) -> HostType {
@@ -100,8 +68,6 @@ impl PortInfo {
 
     /// Helper method to build row for comfy_table based on view mode
     pub fn to_row(&self, long: bool) -> Row {
-        use comfy_table::{Attribute, Cell, CellAlignment, Color, Row};
-
         let mut row: Row = Row::new();
 
         row.add_cell(Cell::new(&self.cmd).set_alignment(CellAlignment::Left));
@@ -122,47 +88,62 @@ impl PortInfo {
                     .set_alignment(CellAlignment::Center)
                     .fg(Color::Cyan),
             );
-
-            let ip_str: &str = match self.ip_version {
-                IPVersion::Ipv4 => "IPv4",
-                IPVersion::Ipv6 => "IPv6",
-            };
             row.add_cell(
-                Cell::new(ip_str)
+                Cell::new(self.ip_version.as_str())
                     .set_alignment(CellAlignment::Center)
                     .fg(Color::DarkYellow),
             );
         }
 
-        let proto_cell: Cell = match &self.protocol {
-            Protocol::Tcp => Cell::new("TCP").fg(Color::Blue),
-            Protocol::Udp => Cell::new("UDP").fg(Color::DarkMagenta),
-            Protocol::Unknown(s) => Cell::new(s).fg(Color::DarkGrey),
-        };
-        row.add_cell(proto_cell.set_alignment(CellAlignment::Center));
-
+        row.add_cell(self.protocol.to_cell());
         row.add_cell(
             Cell::new(self.port)
                 .set_alignment(CellAlignment::Right)
                 .fg(Color::Yellow),
         );
-
         row.add_cell(
             Cell::new(&self.host)
                 .set_alignment(CellAlignment::Left)
                 .fg(Color::DarkGrey),
         );
-
-        let state_cell: Cell = match &self.state {
-            Some(PortState::Listen) => Cell::new("LISTEN")
-                .fg(Color::Green)
-                .add_attribute(Attribute::Bold),
-            Some(PortState::Established) => Cell::new("ESTABLISHED").fg(Color::Cyan),
-            Some(PortState::Other(s)) => Cell::new(s),
-            None => Cell::new("-").fg(Color::DarkGrey),
-        };
-        row.add_cell(state_cell.set_alignment(CellAlignment::Left));
+        row.add_cell(PortState::to_cell(&self.state));
 
         row
+    }
+}
+
+impl Protocol {
+    /// Generates stylized cell for Protocol
+    pub fn to_cell(&self) -> Cell {
+        match self {
+            Self::Tcp => Cell::new("TCP").fg(Color::Blue),
+            Self::Udp => Cell::new("UDP").fg(Color::DarkMagenta),
+            Self::Unknown(s) => Cell::new(s).fg(Color::DarkGrey),
+        }
+        .set_alignment(CellAlignment::Center)
+    }
+}
+
+impl PortState {
+    /// Generates stylized cell for PortState
+    pub fn to_cell(state: &Option<Self>) -> Cell {
+        match state {
+            Some(Self::Listen) => Cell::new("LISTEN")
+                .fg(Color::Green)
+                .add_attribute(Attribute::Bold),
+            Some(Self::Established) => Cell::new("ESTABLISHED").fg(Color::Cyan),
+            Some(Self::Other(s)) => Cell::new(s),
+            None => Cell::new("-").fg(Color::DarkGrey),
+        }
+        .set_alignment(CellAlignment::Left)
+    }
+}
+
+impl IPVersion {
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Ipv4 => "IPv4",
+            Self::Ipv6 => "IPv6",
+        }
     }
 }
