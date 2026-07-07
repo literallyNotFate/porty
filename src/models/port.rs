@@ -42,10 +42,13 @@ pub enum PortState {
 }
 
 /// Port host type
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
 pub enum HostType {
+    #[value(name = "localhost")]
     Localhost,
+    #[value(name = "any")]
     Any,
+    #[value(name = "external")]
     External,
 }
 
@@ -95,8 +98,8 @@ impl PortInfo {
         }
     }
 
-    /// Helper method to build row for comfy_table
-    pub fn to_row(&self) -> Row {
+    /// Helper method to build row for comfy_table based on view mode
+    pub fn to_row(&self, long: bool) -> Row {
         use comfy_table::{Attribute, Cell, CellAlignment, Color, Row};
 
         let mut row: Row = Row::new();
@@ -107,6 +110,29 @@ impl PortInfo {
                 .set_alignment(CellAlignment::Right)
                 .fg(Color::Magenta),
         );
+
+        if long {
+            row.add_cell(
+                Cell::new(&self.user)
+                    .set_alignment(CellAlignment::Left)
+                    .fg(Color::Green),
+            );
+            row.add_cell(
+                Cell::new(&self.fd)
+                    .set_alignment(CellAlignment::Center)
+                    .fg(Color::Cyan),
+            );
+
+            let ip_str: &str = match self.ip_version {
+                IPVersion::Ipv4 => "IPv4",
+                IPVersion::Ipv6 => "IPv6",
+            };
+            row.add_cell(
+                Cell::new(ip_str)
+                    .set_alignment(CellAlignment::Center)
+                    .fg(Color::DarkYellow),
+            );
+        }
 
         let proto_cell: Cell = match &self.protocol {
             Protocol::Tcp => Cell::new("TCP").fg(Color::Blue),

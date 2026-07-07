@@ -1,6 +1,6 @@
 use crate::{
     cli::list::ListArgs,
-    models::HostType,
+    models::ProcessOwner,
     services::{display, parser, scanner},
 };
 
@@ -26,13 +26,20 @@ pub fn run(args: ListArgs) -> anyhow::Result<()> {
         ports.retain(|p| p.state.as_ref() == Some(target_state));
     }
 
-    if let Some(ref host_scope) = args.host {
-        ports.retain(|p| match (p.host_type(), host_scope.as_str()) {
-            (HostType::Localhost, "localhost") => true,
-            (HostType::Any, "any") => true,
-            (HostType::External, "external") => true,
-            _ => false,
+    if let Some(ref target_ip_ver) = args.ip_version {
+        ports.retain(|p| p.ip_version == *target_ip_ver);
+    }
+
+    if let Some(ref user_filter) = args.user {
+        let current_user: String = std::env::var("USER").unwrap_or_default();
+        ports.retain(|p| match user_filter {
+            ProcessOwner::Root => p.user == "root",
+            ProcessOwner::Current => p.user == current_user,
         });
+    }
+
+    if let Some(ref host_scope) = args.host {
+        ports.retain(|p| p.host_type() == *host_scope);
     }
 
     if let Some(exclude_port) = args.exclude {
@@ -48,6 +55,6 @@ pub fn run(args: ListArgs) -> anyhow::Result<()> {
         return Ok(());
     }
 
-    display::display_table(&ports);
+    display::display_table(&ports, args.long);
     Ok(())
 }
