@@ -8,9 +8,10 @@ pub fn display_table(ports: &[PortInfo], long: bool) {
     table.load_preset(presets::NOTHING);
     table.set_style(TableComponent::HeaderLines, '─');
 
-    let mut header = vec![
-        Cell::new("CMD").set_alignment(CellAlignment::Left),
-        Cell::new("PID").set_alignment(CellAlignment::Right),
+    if !colored::control::SHOULD_COLORIZE.should_colorize() {
+        table.force_no_tty();
+    }
+
     let header: Row = build_header(long);
     table.set_header(header);
 

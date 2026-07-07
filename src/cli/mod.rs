@@ -10,7 +10,7 @@ pub struct Cli {
     pub command: Commands,
 
     /// Managing color output
-    #[arg(long, value_enum, default_value_t = ColorMode::Auto)]
+    #[arg(long, value_enum, default_value_t = ColorMode::Auto, global = true)]
     pub color: ColorMode,
 }
 
