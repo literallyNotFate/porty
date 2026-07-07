@@ -1,4 +1,4 @@
-use crate::models::{PortInfo, PortState, Protocol};
+use crate::models::{IPVersion, PortInfo, PortState, Protocol};
 
 /// Parse raw `lsof` output
 pub fn parse(raw: &str) -> Vec<PortInfo> {
@@ -14,14 +14,24 @@ fn parse_line(line: &str) -> Option<PortInfo> {
 
     let cmd: String = fields[0].to_string();
     let pid: u32 = fields[1].parse::<u32>().ok()?;
-    let protocol: Protocol = fields[7].parse::<Protocol>().ok()?;
+    let user: String = fields[2].to_string();
+    let fd: String = fields[3].to_string();
 
+    let ip_version = match fields[4].to_uppercase().as_str() {
+        "IPV6" => IPVersion::Ipv6,
+        _ => IPVersion::Ipv4,
+    };
+
+    let protocol: Protocol = fields[7].parse::<Protocol>().ok()?;
     let raw_addr: String = fields[8..].join(" ");
     let (host, port, state) = parse_addr(&raw_addr)?;
 
     Some(PortInfo {
         cmd,
         pid,
+        user,
+        fd,
+        ip_version,
         protocol,
         port,
         host,

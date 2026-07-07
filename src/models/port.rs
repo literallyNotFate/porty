@@ -12,6 +12,24 @@ pub enum Protocol {
     Unknown(String),
 }
 
+/// IP version
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum IPVersion {
+    #[value(name = "ipv4")]
+    Ipv4,
+    #[value(name = "ipv6")]
+    Ipv6,
+}
+
+/// Process owner
+#[derive(Debug, Clone, Copy, PartialEq, Eq, clap::ValueEnum)]
+pub enum ProcessOwner {
+    #[value(name = "root")]
+    Root,
+    #[value(name = "current")]
+    Current,
+}
+
 /// State of the port
 #[derive(Debug, Clone, PartialEq, Eq, clap::ValueEnum)]
 pub enum PortState {
@@ -37,6 +55,9 @@ pub struct PortInfo {
     pub cmd: String,
     pub pid: u32,
     pub protocol: Protocol,
+    pub user: String,
+    pub ip_version: IPVersion,
+    pub fd: String,
     pub port: u16,
     pub host: String,
     pub state: Option<PortState>,
