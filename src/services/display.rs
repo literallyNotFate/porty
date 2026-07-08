@@ -1,12 +1,13 @@
-use crate::models::PortInfo;
+use crate::models::{PortInfo, PortState};
 
 /// Display ports in an organized table format
 pub fn display_table(ports: &[PortInfo], long: bool) {
-    use comfy_table::{Row, Table, TableComponent, presets};
+    use comfy_table::{ContentArrangement, Row, Table, TableComponent, presets};
 
     let mut table: Table = Table::new();
     table.load_preset(presets::NOTHING);
     table.set_style(TableComponent::HeaderLines, '─');
+    table.set_content_arrangement(ContentArrangement::Dynamic);
 
     if !colored::control::SHOULD_COLORIZE.should_colorize() {
         table.force_no_tty();
@@ -20,6 +21,7 @@ pub fn display_table(ports: &[PortInfo], long: bool) {
     }
 
     println!("\n{table}\n");
+    render_summary(ports);
 }
 
 /// Build main table header
@@ -46,4 +48,25 @@ fn build_header(long: bool) -> comfy_table::Row {
     ]);
 
     comfy_table::Row::from(header)
+}
+
+/// Render summary
+fn render_summary(ports: &[PortInfo]) {
+    use colored::Colorize;
+    let listen_count: usize = ports
+        .iter()
+        .filter(|p| matches!(p.state, Some(PortState::Listen)))
+        .count();
+    let estab_count: usize = ports
+        .iter()
+        .filter(|p| matches!(p.state, Some(PortState::Established)))
+        .count();
+
+    println!(
+        " {}  Total: {} active ports ({} listening, {} established)\n",
+        "󱌢".magenta().bold(),
+        ports.len().to_string().yellow().bold(),
+        listen_count.to_string().green().bold(),
+        estab_count.to_string().cyan().bold()
+    );
 }

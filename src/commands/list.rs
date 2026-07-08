@@ -19,6 +19,7 @@ pub fn run(args: ListArgs) -> anyhow::Result<()> {
         return Ok(());
     }
 
+    ports.sort();
     display::display_table(&ports, args.long);
     Ok(())
 }

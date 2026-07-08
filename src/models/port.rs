@@ -1,4 +1,5 @@
 use comfy_table::{Attribute, Cell, CellAlignment, Color, Row};
+use std::cmp::Ordering;
 
 /// Used transport protocols
 #[derive(Debug, Clone, PartialEq, Eq, clap::ValueEnum)]
@@ -101,11 +102,7 @@ impl PortInfo {
                 .set_alignment(CellAlignment::Right)
                 .fg(Color::Yellow),
         );
-        row.add_cell(
-            Cell::new(&self.host)
-                .set_alignment(CellAlignment::Left)
-                .fg(Color::DarkGrey),
-        );
+        row.add_cell(self.host_type().to_cell(&self.host));
         row.add_cell(PortState::to_cell(&self.state));
 
         row
@@ -139,6 +136,18 @@ impl PortState {
     }
 }
 
+impl HostType {
+    /// Generates stylized cell for HostType with host supressing
+    pub fn to_cell(&self, raw_host: &str) -> Cell {
+        match self {
+            Self::Localhost => Cell::new("localhost").fg(Color::DarkGrey),
+            Self::Any => Cell::new("*").fg(Color::DarkGrey),
+            Self::External => Cell::new(raw_host),
+        }
+        .set_alignment(CellAlignment::Left)
+    }
+}
+
 impl IPVersion {
     pub fn as_str(&self) -> &'static str {
         match self {
@@ -147,3 +156,35 @@ impl IPVersion {
         }
     }
 }
+
+/// Automatic sorting (LISTEN ports are always up)
+impl Ord for PortInfo {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let state_weight = |state: &Option<PortState>| match state {
+            Some(PortState::Listen) => 0,
+            Some(PortState::Established) => 1,
+            Some(PortState::Other(_)) => 2,
+            None => 3,
+        };
+
+        state_weight(&self.state)
+            .cmp(&state_weight(&other.state))
+            .then_with(|| self.port.cmp(&other.port))
+            .then_with(|| self.cmd.cmp(&other.cmd))
+            .then_with(|| self.pid.cmp(&other.pid))
+    }
+}
+
+impl PartialOrd for PortInfo {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl PartialEq for PortInfo {
+    fn eq(&self, other: &Self) -> bool {
+        self.cmp(other) == Ordering::Equal
+    }
+}
+
+impl Eq for PortInfo {}
