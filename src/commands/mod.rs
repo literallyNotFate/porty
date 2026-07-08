@@ -1,3 +1,4 @@
+mod info;
 mod list;
 
 use crate::cli::Commands;
@@ -7,6 +8,7 @@ use crate::cli::Commands;
 pub fn run(command: Commands) -> anyhow::Result<()> {
     match command {
         Commands::List(args) => list::run(args)?,
+        Commands::Info(args) => info::run(args)?,
     }
 
     Ok(())

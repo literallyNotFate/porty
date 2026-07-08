@@ -1,3 +1,4 @@
+pub mod info;
 pub mod list;
 
 use clap::{Parser, Subcommand, ValueEnum};
@@ -18,6 +19,9 @@ pub struct Cli {
 pub enum Commands {
     /// List all available ports
     List(list::ListArgs),
+
+    /// Get detailed information about a specific port or PID
+    Info(info::InfoArgs),
 }
 
 /// Color output modes
